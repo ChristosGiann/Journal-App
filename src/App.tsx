@@ -44,6 +44,12 @@ type ConfirmModalState = {
   onConfirm: () => Promise<void> | void;
 };
 
+type CalendarDay = {
+  date: string;
+  dayNumber: number;
+  isCurrentMonth: boolean;
+};
+
 const defaultCategories = [
   "Δουλειά",
   "Προπόνηση",
@@ -60,6 +66,39 @@ const getToday = () => {
 };
 
 const getMonthFromDate = (date: string) => date.slice(0, 7);
+
+const weekDays = ["Δευ", "Τρι", "Τετ", "Πεμ", "Παρ", "Σαβ", "Κυρ"];
+
+function formatDateForInput(date: Date) {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function getCalendarDays(month: string): CalendarDay[] {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const monthIndex = monthNumber - 1;
+
+  const firstDayOfMonth = new Date(year, monthIndex, 1);
+
+  const mondayBasedStartOffset = (firstDayOfMonth.getDay() + 6) % 7;
+
+  const calendarStartDate = new Date(
+    year,
+    monthIndex,
+    1 - mondayBasedStartOffset
+  );
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const currentDate = new Date(calendarStartDate);
+    currentDate.setDate(calendarStartDate.getDate() + index);
+
+    return {
+      date: formatDateForInput(currentDate),
+      dayNumber: currentDate.getDate(),
+      isCurrentMonth: currentDate.getMonth() === monthIndex,
+    };
+  });
+}
 
 
 function getDurationMinutes(startTime: string, endTime: string) {
@@ -123,6 +162,7 @@ function App() {
   const [activeView, setActiveView] = useState<View>("today");
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [selectedMonth, setSelectedMonth] = useState(getMonthFromDate(getToday()));
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(getToday());
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
@@ -170,6 +210,18 @@ function App() {
   const todayStats = buildStats(dayTasks, categories);
   const monthStats = buildStats(monthTasks, categories);
   const allTimeStats = buildStats(tasks, categories);
+
+  const selectedCalendarTasks = useMemo(() => {
+    return tasks.filter(
+      (task) => task.date === selectedCalendarDate && task.type !== "backlog"
+    );
+  }, [tasks, selectedCalendarDate]);
+
+  const selectedCalendarStats = buildStats(selectedCalendarTasks, categories);
+
+  const calendarDays = useMemo(() => {
+    return getCalendarDays(selectedMonth);
+  }, [selectedMonth]);
 
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -348,7 +400,7 @@ function App() {
       name: trimmedName,
       createdAt: serverTimestamp(),
     });
-    
+
     setNewCategoryName("");
     setForm((currentForm) => ({
       ...currentForm,
@@ -854,6 +906,99 @@ function App() {
     );
   }
 
+  function renderMonthCalendar() {
+    return (
+      <div className="rounded-2xl bg-white p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold">Calendar μήνα</h3>
+            <p className="text-sm font-semibold text-slate-500">
+              Πάτα σε μια ημέρα για να δεις τα stats της.
+            </p>
+          </div>
+
+          <p className="text-sm font-bold text-slate-500">{selectedMonth}</p>
+        </div>
+
+        <div className="grid grid-cols-7 gap-2">
+          {weekDays.map((day) => (
+            <div
+              key={day}
+              className="py-2 text-center text-xs font-bold text-slate-500"
+            >
+              {day}
+            </div>
+          ))}
+
+          {calendarDays.map((calendarDay) => {
+            const tasksForDay = monthTasks.filter(
+              (task) => task.date === calendarDay.date
+            );
+
+            const doneTasksForDay = tasksForDay.filter(
+              (task) => task.status === "done"
+            );
+
+            const doneMinutesForDay = doneTasksForDay.reduce((sum, task) => {
+              return sum + getDurationMinutes(task.startTime, task.endTime);
+            }, 0);
+
+            const isToday = calendarDay.date === getToday();
+            const isSelectedCalendarDay = calendarDay.date === selectedCalendarDate;
+
+            return (
+              <button
+                key={calendarDay.date}
+                type="button"
+                onClick={() => {
+                  setSelectedCalendarDate(calendarDay.date);
+                }}
+                className={`min-h-28 rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md ${isSelectedCalendarDay
+                  ? "border-slate-950 bg-slate-950 text-white"
+                  : calendarDay.isCurrentMonth
+                    ? "border-slate-200 bg-white"
+                    : "border-slate-100 bg-slate-50 text-slate-400"
+                  } ${isToday ? "ring-2 ring-blue-500 ring-offset-2" : ""}`}
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-sm font-bold">
+                    {calendarDay.dayNumber}
+                  </span>
+
+                  {isToday && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isSelectedCalendarDay
+                        ? "bg-white text-slate-950"
+                        : "bg-blue-100 text-blue-700"
+                        }`}
+                    >
+                      Today
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex min-h-12 items-center justify-center">
+                  {doneMinutesForDay > 0 ? (
+                    <p className="text-lg font-extrabold">
+                      {formatMinutes(doneMinutesForDay)}
+                    </p>
+                  ) : (
+                    <p
+                      className={`text-sm font-semibold ${isSelectedCalendarDay ? "text-white/50" : "text-slate-300"
+                        }`}
+                    >
+                      —
+                    </p>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   function renderMonthView() {
     return (
       <>
@@ -868,28 +1013,78 @@ function App() {
           <input
             type="month"
             value={selectedMonth}
-            onChange={(event) => setSelectedMonth(event.target.value)}
+            onChange={(event) => {
+              const newMonth = event.target.value;
+
+              setSelectedMonth(newMonth);
+              setSelectedCalendarDate(`${newMonth}-01`);
+            }}
             className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
           />
         </header>
 
         {renderStatsCards(monthStats)}
 
-        <div className="grid gap-8 xl:grid-cols-[1.3fr_1fr]">
-          <section className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold">Tasks μήνα</h3>
-              <p className="text-sm font-semibold text-slate-500">
-                {selectedMonth}
-              </p>
-            </div>
+        <div className="grid gap-8 xl:grid-cols-[1.4fr_0.8fr]">
+          <section className="space-y-8">
+            {renderMonthCalendar()}
 
-            {renderTaskList(monthTasks, "Δεν έχεις tasks για αυτόν τον μήνα.")}
+            <div className="rounded-2xl bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-xl font-bold">Tasks μήνα</h3>
+                <p className="text-sm font-semibold text-slate-500">
+                  {selectedMonth}
+                </p>
+              </div>
+
+              {renderTaskList(monthTasks, "Δεν έχεις tasks για αυτόν τον μήνα.")}
+            </div>
           </section>
 
-          <aside>{renderCategoryStats(monthStats)}</aside>
+          <aside>{renderSelectedCalendarDayPanel()}</aside>
         </div>
       </>
+    );
+  }
+
+  function renderSelectedCalendarDayPanel() {
+    return (
+      <div className="space-y-6">
+        {renderCategoryStats(selectedCalendarStats)}
+
+        <div className="rounded-2xl bg-white p-5 shadow-sm">
+          <p className="text-sm font-semibold text-slate-500">
+            Επιλεγμένη ημέρα
+          </p>
+
+          <h3 className="mt-1 text-2xl font-bold">{selectedCalendarDate}</h3>
+
+          <div className="mt-4 space-y-2 text-sm font-semibold text-slate-700">
+            <p>Tasks: {selectedCalendarStats.totalTasks}</p>
+            <p>Done: {selectedCalendarStats.doneTasks}</p>
+            <p>
+              Χρόνος: {formatMinutes(selectedCalendarStats.totalMinutes)}
+            </p>
+            <p>Completion: {selectedCalendarStats.completionRate}%</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedDate(selectedCalendarDate);
+              setSelectedMonth(getMonthFromDate(selectedCalendarDate));
+              setForm((currentForm) => ({
+                ...currentForm,
+                date: selectedCalendarDate,
+              }));
+              setActiveView("today");
+            }}
+            className="mt-5 w-full rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+          >
+            Δες την ημέρα
+          </button>
+        </div>
+      </div>
     );
   }
 
