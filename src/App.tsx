@@ -932,12 +932,24 @@ function App() {
           {renderForm()}
 
           <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold">Όλα τα backlog items</h3>
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-xl font-bold">Όλα τα backlog items</h3>
 
-              <p className="text-sm font-semibold text-slate-500">
-                {backlogItems.length} items
-              </p>
+                <p className="text-sm font-semibold text-slate-500">
+                  {backlogItems.length} items · Διάλεξε ημερομηνία για schedule
+                </p>
+              </div>
+
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(event) => {
+                  setSelectedDate(event.target.value);
+                  setSelectedMonth(getMonthFromDate(event.target.value));
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+              />
             </div>
 
             <div className="space-y-3">
@@ -971,6 +983,13 @@ function App() {
                     </button>
 
                     <button
+                      onClick={() => scheduleBacklogItem(item)}
+                      className="rounded-xl bg-purple-100 px-4 py-2 text-sm font-bold text-purple-700 hover:bg-purple-200"
+                    >
+                      Schedule
+                    </button>
+
+                    <button
                       onClick={() => requestDeleteTask(item)}
                       className="rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-200"
                     >
@@ -984,6 +1003,21 @@ function App() {
         </div>
       </>
     );
+  }
+
+  async function scheduleBacklogItem(task: Task) {
+    if (!firebaseUser) return;
+
+    const taskRef = doc(db, "users", firebaseUser.uid, "tasks", task.id);
+
+    await updateDoc(taskRef, {
+      type: "task",
+      date: selectedDate,
+      status: "pending",
+      updatedAt: serverTimestamp(),
+    });
+
+    setActiveView("today");
   }
 
   const views: { id: View; label: string }[] = [
