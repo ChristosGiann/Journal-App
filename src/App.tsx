@@ -27,6 +27,10 @@ import { formatMinutes, getDurationMinutes } from "./utils/time";
 import { buildStats } from "./utils/stats";
 import "./App.css";
 
+import { ConfirmModal } from "./components/ConfirmModal";
+import { StatCards } from "./components/StatCards";
+import { CategoryStats } from "./components/CategoryStats";
+
 function App() {
   const [activeView, setActiveView] = useState<View>("today");
   const [selectedDate, setSelectedDate] = useState(getToday());
@@ -248,6 +252,19 @@ function App() {
     await deleteDoc(taskRef);
   }
 
+  function requestDeleteTask(task: Task) {
+    setConfirmModal({
+      title: "Διαγραφή task",
+      message: `Θέλεις σίγουρα να διαγράψεις το "${task.title}"; Αυτή η ενέργεια δεν αναιρείται.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      danger: true,
+      onConfirm: async () => {
+        await deleteTask(task.id);
+      },
+    });
+  }
+
   async function addCategory() {
     if (!firebaseUser) return;
 
@@ -350,62 +367,6 @@ function App() {
     });
   }
 
-  function renderStatsCards(stats: ReturnType<typeof buildStats>) {
-    return (
-      <section className="mb-8 grid gap-4 md:grid-cols-4">
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Tasks</p>
-          <p className="mt-2 text-3xl font-bold">{stats.totalTasks}</p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Done</p>
-          <p className="mt-2 text-3xl font-bold">{stats.doneTasks}</p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Logged Time</p>
-          <p className="mt-2 text-3xl font-bold">
-            {formatMinutes(stats.totalMinutes)}
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">Completion</p>
-          <p className="mt-2 text-3xl font-bold">{stats.completionRate}%</p>
-        </div>
-      </section>
-    );
-  }
-
-  function renderCategoryStats(stats: ReturnType<typeof buildStats>) {
-    return (
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-xl font-bold">Ώρες ανά κατηγορία</h3>
-
-        <div className="space-y-3">
-          {stats.minutesByCategory.map((item) => (
-            <div key={item.category}>
-              <div className="mb-1 flex justify-between text-sm font-semibold">
-                <span>{item.category}</span>
-                <span>{formatMinutes(item.total)}</span>
-              </div>
-
-              <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-slate-950"
-                  style={{
-                    width: `${Math.min((item.total / 480) * 100, 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   function renderTaskList(taskList: Task[], emptyMessage: string) {
     return (
       <div className="space-y-3">
@@ -472,8 +433,8 @@ function App() {
                 </button>
 
                 <button
-                  onClick={() => deleteTask(task.id)}
-                  className="rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-700"
+                  onClick={() => requestDeleteTask(task)}
+                  className="rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-200"
                 >
                   Delete
                 </button>
@@ -481,50 +442,6 @@ function App() {
             </div>
           );
         })}
-      </div>
-    );
-  }
-
-  function renderConfirmModal() {
-    if (!confirmModal) return null;
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-          <h3 className="text-xl font-bold text-slate-950">
-            {confirmModal.title}
-          </h3>
-
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            {confirmModal.message}
-          </p>
-
-          <div className="mt-6 flex justify-end gap-3">
-            {confirmModal.cancelText && (
-              <button
-                type="button"
-                onClick={() => setConfirmModal(null)}
-                className="rounded-xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200"
-              >
-                {confirmModal.cancelText}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={async () => {
-                await confirmModal.onConfirm();
-                setConfirmModal(null);
-              }}
-              className={`rounded-xl px-5 py-3 text-sm font-bold text-white ${confirmModal.danger
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-slate-950 hover:bg-slate-800"
-                }`}
-            >
-              {confirmModal.confirmText}
-            </button>
-          </div>
-        </div>
       </div>
     );
   }
@@ -641,23 +558,37 @@ function App() {
             className="rounded-xl border border-slate-200 px-4 py-3"
           />
 
-          <input
-            type="time"
-            value={form.startTime}
-            onChange={(event) =>
-              setForm({ ...form, startTime: event.target.value })
-            }
-            className="rounded-xl border border-slate-200 px-4 py-3"
-          />
+          <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="block text-sm font-bold text-slate-600">
+                Ώρα έναρξης
+              </span>
 
-          <input
-            type="time"
-            value={form.endTime}
-            onChange={(event) =>
-              setForm({ ...form, endTime: event.target.value })
-            }
-            className="rounded-xl border border-slate-200 px-4 py-3"
-          />
+              <input
+                type="time"
+                value={form.startTime}
+                onChange={(event) =>
+                  setForm({ ...form, startTime: event.target.value })
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3"
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="block text-sm font-bold text-slate-600">
+                Ώρα λήξης
+              </span>
+
+              <input
+                type="time"
+                value={form.endTime}
+                onChange={(event) =>
+                  setForm({ ...form, endTime: event.target.value })
+                }
+                className="w-full rounded-xl border border-slate-200 px-4 py-3"
+              />
+            </label>
+          </div>
 
           <textarea
             placeholder="Σημειώσεις"
@@ -716,7 +647,7 @@ function App() {
           />
         </header>
 
-        {renderStatsCards(todayStats)}
+        <StatCards stats={todayStats} />
 
         <div className="grid gap-8 xl:grid-cols-[1.5fr_1fr]">
           <section className="space-y-6">
@@ -735,7 +666,7 @@ function App() {
           </section>
 
           <aside className="space-y-6">
-            {renderCategoryStats(todayStats)}
+            <CategoryStats stats={todayStats} />
 
             <div className="rounded-2xl bg-white p-5 shadow-sm">
               <h3 className="mb-4 text-xl font-bold">Backlog</h3>
@@ -892,7 +823,7 @@ function App() {
           />
         </header>
 
-        {renderStatsCards(monthStats)}
+        <StatCards stats={monthStats} />
 
         <div className="grid gap-8 xl:grid-cols-[1.4fr_0.8fr]">
           <section className="space-y-8">
@@ -919,7 +850,7 @@ function App() {
   function renderSelectedCalendarDayPanel() {
     return (
       <div className="space-y-6">
-        {renderCategoryStats(selectedCalendarStats)}
+        <CategoryStats stats={selectedCalendarStats} />
 
         <div className="rounded-2xl bg-white p-5 shadow-sm">
           <p className="text-sm font-semibold text-slate-500">
@@ -967,10 +898,10 @@ function App() {
           <h2 className="text-3xl font-bold">Συνολικά στατιστικά</h2>
         </header>
 
-        {renderStatsCards(allTimeStats)}
+        <StatCards stats={allTimeStats} />
 
         <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
-          {renderCategoryStats(allTimeStats)}
+          <CategoryStats stats={allTimeStats} />
 
           <div className="rounded-2xl bg-white p-5 shadow-sm">
             <h3 className="mb-4 text-xl font-bold">Σύνοψη</h3>
@@ -980,7 +911,55 @@ function App() {
               <p>Ολοκληρωμένα tasks: {allTimeStats.doneTasks}</p>
               <p>Συνολικός χρόνος: {formatMinutes(allTimeStats.totalMinutes)}</p>
               <p>Backlog items: {backlogItems.length}</p>
+              <p>
+                Μέσος χρόνος ανά completed task:{" "}
+                {formatMinutes(allTimeStats.averageMinutesPerDoneTask)}
+              </p>
+              <p>
+                Πιο ενεργή κατηγορία:{" "}
+                {allTimeStats.mostActiveCategory
+                  ? `${allTimeStats.mostActiveCategory.category} (${formatMinutes(
+                    allTimeStats.mostActiveCategory.totalMinutes
+                  )})`
+                  : "Δεν υπάρχουν ακόμα ολοκληρωμένα tasks με χρόνο."}
+              </p>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-2xl bg-white p-5 shadow-sm">
+          <h3 className="mb-4 text-xl font-bold">Ανάλυση ανά κατηγορία</h3>
+
+          <div className="space-y-3">
+            {allTimeStats.categoryStats.map((categoryStat) => (
+              <div
+                key={categoryStat.category}
+                className="rounded-xl border border-slate-200 p-4"
+              >
+                <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                  <h4 className="font-bold">{categoryStat.category}</h4>
+
+                  <p className="text-sm font-semibold text-slate-500">
+                    {categoryStat.completionRate}% completion
+                  </p>
+                </div>
+
+                <div className="grid gap-3 text-sm font-semibold text-slate-700 md:grid-cols-3">
+                  <p>Tasks: {categoryStat.totalTasks}</p>
+                  <p>Done: {categoryStat.doneTasks}</p>
+                  <p>Χρόνος: {formatMinutes(categoryStat.totalMinutes)}</p>
+                </div>
+
+                <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-slate-950"
+                    style={{
+                      width: `${categoryStat.completionRate}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </>
@@ -1001,7 +980,25 @@ function App() {
           {renderForm()}
 
           <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-xl font-bold">Όλα τα backlog items</h3>
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-xl font-bold">Όλα τα backlog items</h3>
+
+                <p className="text-sm font-semibold text-slate-500">
+                  {backlogItems.length} items · Διάλεξε ημερομηνία για schedule
+                </p>
+              </div>
+
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(event) => {
+                  setSelectedDate(event.target.value);
+                  setSelectedMonth(getMonthFromDate(event.target.value));
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+              />
+            </div>
 
             <div className="space-y-3">
               {backlogItems.length === 0 && (
@@ -1025,12 +1022,28 @@ function App() {
                     )}
                   </div>
 
-                  <button
-                    onClick={() => deleteTask(item.id)}
-                    className="rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-700"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => startEditTask(item)}
+                      className="rounded-xl bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-200"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => scheduleBacklogItem(item)}
+                      className="rounded-xl bg-purple-100 px-4 py-2 text-sm font-bold text-purple-700 hover:bg-purple-200"
+                    >
+                      Schedule
+                    </button>
+
+                    <button
+                      onClick={() => requestDeleteTask(item)}
+                      className="rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-200"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1038,6 +1051,21 @@ function App() {
         </div>
       </>
     );
+  }
+
+  async function scheduleBacklogItem(task: Task) {
+    if (!firebaseUser) return;
+
+    const taskRef = doc(db, "users", firebaseUser.uid, "tasks", task.id);
+
+    await updateDoc(taskRef, {
+      type: "task",
+      date: selectedDate,
+      status: "pending",
+      updatedAt: serverTimestamp(),
+    });
+
+    setActiveView("today");
   }
 
   const views: { id: View; label: string }[] = [
@@ -1113,7 +1141,11 @@ function App() {
           {activeView === "backlog" && renderBacklogView()}
         </main>
       </div>
-      {renderConfirmModal()}
+
+      <ConfirmModal
+        confirmModal={confirmModal}
+        onClose={() => setConfirmModal(null)}
+      />
     </div>
   );
 }
