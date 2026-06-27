@@ -1,3 +1,4 @@
+import { theme } from "../styles/theme";
 import type { ConfirmModalState } from "../types";
 
 type ConfirmModalProps = {
@@ -9,13 +10,15 @@ export function ConfirmModal({ confirmModal, onClose }: ConfirmModalProps) {
   if (!confirmModal) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-        <h3 className="text-xl font-bold text-slate-950">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-neutral-300 bg-stone-50 p-6 shadow-[0_25px_80px_rgba(23,23,23,0.35)]">
+        <p className={theme.eyebrow}>Confirm action</p>
+
+        <h3 className={`${theme.sectionTitle} ${theme.brushUnderline} mt-2`}>
           {confirmModal.title}
         </h3>
 
-        <p className="mt-3 text-sm leading-6 text-slate-600">
+        <p className="mt-5 text-sm leading-6 text-neutral-600">
           {confirmModal.message}
         </p>
 
@@ -24,7 +27,7 @@ export function ConfirmModal({ confirmModal, onClose }: ConfirmModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200"
+              className={theme.secondaryButton}
             >
               {confirmModal.cancelText}
             </button>
@@ -36,11 +39,11 @@ export function ConfirmModal({ confirmModal, onClose }: ConfirmModalProps) {
               await confirmModal.onConfirm();
               onClose();
             }}
-            className={`rounded-xl px-5 py-3 text-sm font-bold text-white ${
+            className={
               confirmModal.danger
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-slate-950 hover:bg-slate-800"
-            }`}
+                ? "rounded-xl border border-neutral-950 bg-neutral-950 px-5 py-3 text-sm font-bold text-stone-50 transition hover:bg-neutral-800"
+                : theme.primaryButton
+            }
           >
             {confirmModal.confirmText}
           </button>

@@ -41,6 +41,7 @@ import {
 } from "./utils/date";
 import { formatMinutes, getDurationMinutes } from "./utils/time";
 import { buildStats } from "./utils/stats";
+import { theme } from "./styles/theme";
 import "./App.css";
 
 import { ConfirmModal } from "./components/ConfirmModal";
@@ -575,7 +576,7 @@ function App() {
     return (
       <div className="space-y-3">
         {taskList.length === 0 && (
-          <p className="rounded-xl bg-slate-50 p-4 text-slate-500">
+          <p className={`${theme.innerPanel} p-4 text-neutral-500`}>
             {emptyMessage}
           </p>
         )}
@@ -586,59 +587,58 @@ function App() {
           return (
             <div
               key={task.id}
-              className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-3 rounded-2xl border border-neutral-300/80 bg-stone-50/75 p-4 transition hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(23,23,23,0.08)] md:flex-row md:items-center md:justify-between"
             >
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                    {task.category}
-                  </span>
-
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                    {task.type}
-                  </span>
+                  <span className={theme.badge}>{task.category}</span>
+                  <span className={theme.badge}>{task.type}</span>
 
                   {duration > 0 && (
-                    <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-bold text-white">
+                    <span className={theme.darkBadge}>
                       {formatMinutes(duration)}
                     </span>
                   )}
                 </div>
 
-                <h4 className="mt-2 text-lg font-bold">
+                <h4 className="mt-2 text-lg font-bold text-neutral-950">
                   {task.status === "done" ? "✓ " : ""}
                   {task.title}
                 </h4>
 
-                <p className="text-sm text-slate-500">
+                <p className="text-sm font-semibold text-neutral-500">
                   {task.startTime && task.endTime
                     ? `${task.date} • ${task.startTime} - ${task.endTime}`
                     : task.date}
                 </p>
 
                 {task.notes && (
-                  <p className="mt-2 text-sm text-slate-600">{task.notes}</p>
+                  <p className="mt-2 text-sm text-neutral-600">{task.notes}</p>
                 )}
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => startEditTask(task)}
-                  className="rounded-xl bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700"
+                  className={theme.smallButton}
                 >
                   Edit
                 </button>
 
                 <button
                   onClick={() => toggleDone(task.id)}
-                  className="rounded-xl bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700"
+                  className={
+                    task.status === "done"
+                      ? theme.smallButton
+                      : "rounded-xl bg-neutral-950 px-4 py-2 text-sm font-bold text-stone-50 transition hover:bg-neutral-800"
+                  }
                 >
                   {task.status === "done" ? "Undo" : "Done"}
                 </button>
 
                 <button
                   onClick={() => requestDeleteTask(task)}
-                  className="rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-200"
+                  className={theme.dangerButton}
                 >
                   Delete
                 </button>
@@ -652,8 +652,8 @@ function App() {
 
   function renderForm() {
     return (
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-xl font-bold">
+      <div className={theme.card}>
+        <h3 className={`${theme.sectionTitle} ${theme.brushUnderline} mb-5`}>
           {editingTaskId ? "Επεξεργασία task" : "Νέο task / routine / backlog item"}
         </h3>
 
@@ -664,7 +664,7 @@ function App() {
             onChange={(event) =>
               setForm({ ...form, title: event.target.value })
             }
-            className="rounded-xl border border-slate-200 px-4 py-3"
+            className={theme.input}
           />
 
           <select
@@ -675,7 +675,7 @@ function App() {
                 type: event.target.value as TaskType,
               })
             }
-            className="rounded-xl border border-slate-200 px-4 py-3"
+            className={theme.input}
           >
             <option value="task">Task</option>
             <option value="routine">Routine</option>
@@ -687,7 +687,7 @@ function App() {
             onChange={(event) =>
               setForm({ ...form, category: event.target.value })
             }
-            className="rounded-xl border border-slate-200 px-4 py-3"
+            className={theme.input}
           >
             {categories.map((category) => (
               <option key={category} value={category}>
@@ -701,13 +701,13 @@ function App() {
               value={newCategoryName}
               onChange={(event) => setNewCategoryName(event.target.value)}
               placeholder="Νέα κατηγορία π.χ. Gaming"
-              className="min-w-0 flex-1 rounded-xl border border-slate-200 p-3"
+              className={`${theme.input} min-w-0 flex-1`}
             />
 
             <button
               type="button"
               onClick={addCategory}
-              className="rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200"
+              className={theme.secondaryButton}
             >
               Add
             </button>
@@ -715,19 +715,19 @@ function App() {
             <button
               type="button"
               onClick={() => setShowCategories((currentValue) => !currentValue)}
-              className="rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200"
+              className={theme.secondaryButton}
             >
               {showCategories ? "Hide" : "Show"}
             </button>
           </div>
           {showCategories && (
             <div className="md:col-span-2">
-              <p className="mb-2 text-sm font-semibold text-slate-500">
+              <p className="mb-2 text-sm font-semibold text-neutral-500">
                 Custom categories
               </p>
 
               {customCategories.length === 0 ? (
-                <p className="rounded-xl bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+                <p className={`${theme.innerPanel} p-4 text-sm font-semibold text-neutral-500`}>
                   Δεν έχεις custom categories ακόμα.
                 </p>
               ) : (
@@ -735,14 +735,14 @@ function App() {
                   {customCategories.map((category) => (
                     <span
                       key={category.id}
-                      className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700"
+                      className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-stone-100 px-3 py-2 text-sm font-bold text-neutral-700"
                     >
                       {category.name}
 
                       <button
                         type="button"
                         onClick={() => requestDeleteCategory(category)}
-                        className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700 hover:bg-red-200"
+                        className="rounded-full bg-neutral-950 px-2 py-0.5 text-xs font-bold text-stone-50 hover:bg-neutral-800"
                       >
                         ×
                       </button>
@@ -759,13 +759,13 @@ function App() {
             onChange={(event) =>
               setForm({ ...form, date: event.target.value })
             }
-            className="rounded-xl border border-slate-200 px-4 py-3"
+            className={theme.input}
           />
 
           {form.type === "backlog" && (
             <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
               <label className="space-y-2">
-                <span className="block text-sm font-bold text-slate-600">
+                <span className="block text-sm font-bold text-neutral-600">
                   Priority
                 </span>
 
@@ -777,7 +777,7 @@ function App() {
                       priority: event.target.value as BacklogPriority,
                     })
                   }
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3"
+                  className={theme.inputFull}
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -786,7 +786,7 @@ function App() {
               </label>
 
               <label className="space-y-2">
-                <span className="block text-sm font-bold text-slate-600">
+                <span className="block text-sm font-bold text-neutral-600">
                   Backlog status
                 </span>
 
@@ -798,7 +798,7 @@ function App() {
                       backlogStatus: event.target.value as BacklogStatus,
                     })
                   }
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3"
+                  className={theme.inputFull}
                 >
                   <option value="idea">Idea</option>
                   <option value="someday">Someday</option>
@@ -810,7 +810,7 @@ function App() {
 
           <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
             <label className="space-y-2">
-              <span className="block text-sm font-bold text-slate-600">
+              <span className="block text-sm font-bold text-neutral-600">
                 Ώρα έναρξης
               </span>
 
@@ -820,12 +820,12 @@ function App() {
                 onChange={(event) =>
                   setForm({ ...form, startTime: event.target.value })
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3"
+                className={theme.inputFull}
               />
             </label>
 
             <label className="space-y-2">
-              <span className="block text-sm font-bold text-slate-600">
+              <span className="block text-sm font-bold text-neutral-600">
                 Ώρα λήξης
               </span>
 
@@ -835,7 +835,7 @@ function App() {
                 onChange={(event) =>
                   setForm({ ...form, endTime: event.target.value })
                 }
-                className="w-full rounded-xl border border-slate-200 px-4 py-3"
+                className={theme.inputFull}
               />
             </label>
           </div>
@@ -846,14 +846,14 @@ function App() {
             onChange={(event) =>
               setForm({ ...form, notes: event.target.value })
             }
-            className="min-h-24 rounded-xl border border-slate-200 px-4 py-3 md:col-span-2"
+            className={`${theme.input} min-h-24 md:col-span-2`}
           />
         </div>
 
         <div className="mt-4 flex flex-wrap gap-3">
           <button
             onClick={saveTask}
-            className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white hover:bg-slate-800"
+            className={theme.primaryButton}
           >
             {editingTaskId ? "Update task" : "+ Add"}
           </button>
@@ -861,7 +861,7 @@ function App() {
           {editingTaskId && (
             <button
               onClick={cancelEditTask}
-              className="rounded-xl bg-slate-100 px-5 py-3 font-semibold text-slate-700 hover:bg-slate-200"
+              className={theme.secondaryButton}
             >
               Cancel edit
             </button>
@@ -878,12 +878,12 @@ function App() {
       : "Δεν υπάρχει Firebase user.";
 
     return (
-      <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm">
+      <div className={`${theme.cardSoft} mb-6`}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-semibold text-slate-500">Account</p>
+            <p className="text-sm font-semibold text-neutral-500">Account</p>
 
-            <p className="mt-1 font-bold text-slate-800">
+            <p className="mt-1 font-bold text-neutral-950">
               {authLoading
                 ? "Σύνδεση με Firebase..."
                 : isAnonymousUser
@@ -892,13 +892,13 @@ function App() {
             </p>
 
             {!authLoading && firebaseUser?.email && (
-              <p className="text-sm font-semibold text-slate-500">
+              <p className="text-sm font-semibold text-neutral-500">
                 {firebaseUser.email}
               </p>
             )}
 
             {!authLoading && isAnonymousUser && (
-              <p className="text-sm font-semibold text-slate-500">
+              <p className="text-sm font-semibold text-neutral-500">
                 Τα δεδομένα είναι προσωρινά συνδεδεμένα με αυτό το browser/device.
               </p>
             )}
@@ -910,7 +910,7 @@ function App() {
                 type="button"
                 onClick={signInWithGoogle}
                 disabled={authActionLoading}
-                className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className={theme.primaryButton}
               >
                 {authActionLoading ? "Opening Google..." : "Sign in with Google"}
               </button>
@@ -920,7 +920,7 @@ function App() {
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200"
+                className={theme.secondaryButton}
               >
                 Sign out
               </button>
@@ -929,7 +929,7 @@ function App() {
         </div>
 
         {authError && (
-          <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">
+          <p className="mt-3 rounded-xl border border-neutral-300 bg-stone-100 p-3 text-sm font-semibold text-neutral-800">
             {authError}
           </p>
         )}
@@ -942,10 +942,10 @@ function App() {
       <>
         <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-semibold text-slate-500">
-              Today Dashboard
-            </p>
-            <h2 className="text-3xl font-bold">Ημέρα, tasks και χρόνος</h2>
+            <p className={theme.eyebrow}>Today Dashboard</p>
+            <h2 className={`${theme.title} ${theme.brushUnderline}`}>
+              Ημέρα, tasks και χρόνος
+            </h2>
           </div>
 
           <input
@@ -959,7 +959,7 @@ function App() {
                 date: event.target.value,
               }));
             }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+            className={theme.input}
           />
         </header>
 
@@ -969,10 +969,12 @@ function App() {
           <section className="space-y-6">
             {renderForm()}
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className={theme.card}>
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xl font-bold">Timeline ημέρας</h3>
-                <p className="text-sm font-semibold text-slate-500">
+                <h3 className={`${theme.sectionTitle} ${theme.brushUnderline}`}>
+                  Timeline ημέρας
+                </h3>
+                <p className="text-sm font-semibold text-neutral-500">
                   {selectedDate}
                 </p>
               </div>
@@ -984,22 +986,24 @@ function App() {
           <aside className="space-y-6">
             <CategoryStats stats={todayStats} />
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <h3 className="mb-4 text-xl font-bold">Backlog</h3>
+            <div className={theme.card}>
+              <h3 className={`${theme.sectionTitle} ${theme.brushUnderline} mb-5`}>
+                Backlog
+              </h3>
 
               <div className="space-y-3">
                 {backlogItems.length === 0 && (
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-neutral-500">
                     Δεν έχεις backlog items ακόμα.
                   </p>
                 )}
 
                 {backlogItems.slice(0, 5).map((item) => (
-                  <div key={item.id} className="rounded-xl bg-slate-50 p-4">
+                  <div key={item.id} className={`${theme.innerPanel} p-4`}>
                     <p className="font-bold">{item.title}</p>
-                    <p className="text-sm text-slate-500">{item.category}</p>
+                    <p className="text-sm text-neutral-500">{item.category}</p>
                     {item.notes && (
-                      <p className="mt-2 text-sm text-slate-600">
+                      <p className="mt-2 text-sm text-neutral-600">
                         {item.notes}
                       </p>
                     )}
@@ -1009,7 +1013,7 @@ function App() {
                 {backlogItems.length > 5 && (
                   <button
                     onClick={() => setActiveView("backlog")}
-                    className="w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white"
+                    className={`${theme.primaryButton} w-full text-sm`}
                   >
                     Δες όλο το backlog
                   </button>
@@ -1024,23 +1028,26 @@ function App() {
 
   function renderMonthCalendar() {
     return (
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
+      <div className={theme.card}>
+        <div className="mb-5 flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-bold">Calendar μήνα</h3>
-            <p className="text-sm font-semibold text-slate-500">
+            <h3 className={`${theme.sectionTitle} ${theme.brushUnderline}`}>
+              Calendar μήνα
+            </h3>
+
+            <p className="mt-3 text-sm font-semibold text-neutral-500">
               Πάτα σε μια ημέρα για να δεις τα stats της.
             </p>
           </div>
 
-          <p className="text-sm font-bold text-slate-500">{selectedMonth}</p>
+          <p className="text-sm font-bold text-neutral-500">{selectedMonth}</p>
         </div>
 
         <div className="grid grid-cols-7 gap-2">
           {weekDays.map((day) => (
             <div
               key={day}
-              className="py-2 text-center text-xs font-bold text-slate-500"
+              className="py-2 text-center text-xs font-bold uppercase tracking-[0.14em] text-neutral-500"
             >
               {day}
             </div>
@@ -1060,7 +1067,8 @@ function App() {
             }, 0);
 
             const isToday = calendarDay.date === getToday();
-            const isSelectedCalendarDay = calendarDay.date === selectedCalendarDate;
+            const isSelectedCalendarDay =
+              calendarDay.date === selectedCalendarDate;
 
             return (
               <button
@@ -1069,12 +1077,12 @@ function App() {
                 onClick={() => {
                   setSelectedCalendarDate(calendarDay.date);
                 }}
-                className={`min-h-28 rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md ${isSelectedCalendarDay
-                  ? "border-slate-950 bg-slate-950 text-white"
+                className={`min-h-28 rounded-2xl border p-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(23,23,23,0.08)] ${isSelectedCalendarDay
+                  ? "border-neutral-950 bg-neutral-950 text-stone-50"
                   : calendarDay.isCurrentMonth
-                    ? "border-slate-200 bg-white"
-                    : "border-slate-100 bg-slate-50 text-slate-400"
-                  } ${isToday ? "ring-2 ring-blue-500 ring-offset-2" : ""}`}
+                    ? "border-neutral-300 bg-stone-50/75 text-neutral-950"
+                    : "border-neutral-200 bg-stone-100/40 text-neutral-400"
+                  } ${isToday ? "ring-2 ring-neutral-950/30 ring-offset-2 ring-offset-stone-100" : ""}`}
               >
                 <div className="mb-4 flex items-center justify-between">
                   <span className="text-sm font-bold">
@@ -1084,8 +1092,8 @@ function App() {
                   {isToday && (
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isSelectedCalendarDay
-                        ? "bg-white text-slate-950"
-                        : "bg-blue-100 text-blue-700"
+                        ? "bg-stone-50 text-neutral-950"
+                        : "bg-neutral-950 text-stone-50"
                         }`}
                     >
                       Today
@@ -1100,7 +1108,9 @@ function App() {
                     </p>
                   ) : (
                     <p
-                      className={`text-sm font-semibold ${isSelectedCalendarDay ? "text-white/50" : "text-slate-300"
+                      className={`text-sm font-semibold ${isSelectedCalendarDay
+                        ? "text-stone-400"
+                        : "text-neutral-300"
                         }`}
                     >
                       —
@@ -1123,11 +1133,13 @@ function App() {
       <>
         <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-semibold text-slate-500">
-              Weekly Overview
-            </p>
-            <h2 className="text-3xl font-bold">Εβδομαδιαία εικόνα</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-500">
+            <p className={theme.eyebrow}>Weekly Overview</p>
+
+            <h2 className={`${theme.title} ${theme.brushUnderline}`}>
+              Εβδομαδιαία εικόνα
+            </h2>
+
+            <p className="mt-3 text-sm font-semibold text-neutral-500">
               {weekStart} έως {weekEnd}
             </p>
           </div>
@@ -1136,7 +1148,7 @@ function App() {
             <button
               type="button"
               onClick={() => setSelectedWeekDate(addDays(weekStart, -7))}
-              className="rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+              className={theme.secondaryButton}
             >
               Προηγούμενη
             </button>
@@ -1144,7 +1156,7 @@ function App() {
             <button
               type="button"
               onClick={() => setSelectedWeekDate(getToday())}
-              className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800"
+              className={theme.primaryButton}
             >
               Τρέχουσα
             </button>
@@ -1152,7 +1164,7 @@ function App() {
             <button
               type="button"
               onClick={() => setSelectedWeekDate(addDays(weekStart, 7))}
-              className="rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+              className={theme.secondaryButton}
             >
               Επόμενη
             </button>
@@ -1161,7 +1173,7 @@ function App() {
               type="date"
               value={selectedWeekDate}
               onChange={(event) => setSelectedWeekDate(event.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+              className={theme.input}
             />
           </div>
         </header>
@@ -1170,14 +1182,15 @@ function App() {
 
         <div className="grid gap-8 xl:grid-cols-[1.4fr_0.8fr]">
           <section className="space-y-8">
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold">Ημέρες εβδομάδας</h3>
-                  <p className="text-sm font-semibold text-slate-500">
-                    Πάτα σε μια ημέρα για να ανοίξει στο Today view.
-                  </p>
-                </div>
+            <div className={theme.card}>
+              <div className="mb-5">
+                <h3 className={`${theme.sectionTitle} ${theme.brushUnderline}`}>
+                  Ημέρες εβδομάδας
+                </h3>
+
+                <p className="mt-3 text-sm font-semibold text-neutral-500">
+                  Πάτα σε μια ημέρα για να ανοίξει στο Today view.
+                </p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
@@ -1198,24 +1211,30 @@ function App() {
                         }));
                         setActiveView("today");
                       }}
-                      className={`rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${isToday
-                        ? "border-blue-400 bg-blue-50"
-                        : "border-slate-200 bg-white"
+                      className={`rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(23,23,23,0.08)] ${isToday
+                        ? "border-neutral-950 bg-neutral-950 text-stone-50"
+                        : "border-neutral-300 bg-stone-50/75 text-neutral-950"
                         }`}
                     >
                       <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm font-bold text-slate-500">
+                        <p
+                          className={`text-sm font-bold ${isToday ? "text-stone-300" : "text-neutral-500"
+                            }`}
+                        >
                           {weekDays[index]}
                         </p>
 
                         {isToday && (
-                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                          <span className="rounded-full bg-stone-50 px-2 py-0.5 text-[10px] font-bold text-neutral-950">
                             Today
                           </span>
                         )}
                       </div>
 
-                      <p className="text-sm font-semibold text-slate-500">
+                      <p
+                        className={`text-sm font-semibold ${isToday ? "text-stone-300" : "text-neutral-500"
+                          }`}
+                      >
                         {daySummary.date}
                       </p>
 
@@ -1223,7 +1242,10 @@ function App() {
                         {formatMinutes(daySummary.doneMinutes)}
                       </p>
 
-                      <p className="mt-2 text-sm font-semibold text-slate-500">
+                      <p
+                        className={`mt-2 text-sm font-semibold ${isToday ? "text-stone-300" : "text-neutral-500"
+                          }`}
+                      >
                         {daySummary.doneTasks}/{daySummary.totalTasks} done
                       </p>
                     </button>
@@ -1232,10 +1254,13 @@ function App() {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xl font-bold">Tasks εβδομάδας</h3>
-                <p className="text-sm font-semibold text-slate-500">
+            <div className={theme.card}>
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className={`${theme.sectionTitle} ${theme.brushUnderline}`}>
+                  Tasks εβδομάδας
+                </h3>
+
+                <p className="text-sm font-semibold text-neutral-500">
                   {weekStart} - {weekEnd}
                 </p>
               </div>
@@ -1257,10 +1282,11 @@ function App() {
       <>
         <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-semibold text-slate-500">
-              Monthly Overview
-            </p>
-            <h2 className="text-3xl font-bold">Μηνιαία εικόνα</h2>
+            <p className={theme.eyebrow}>Monthly Overview</p>
+
+            <h2 className={`${theme.title} ${theme.brushUnderline}`}>
+              Μηνιαία εικόνα
+            </h2>
           </div>
 
           <input
@@ -1272,7 +1298,7 @@ function App() {
               setSelectedMonth(newMonth);
               setSelectedCalendarDate(`${newMonth}-01`);
             }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+            className={theme.input}
           />
         </header>
 
@@ -1282,10 +1308,13 @@ function App() {
           <section className="space-y-8">
             {renderMonthCalendar()}
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xl font-bold">Tasks μήνα</h3>
-                <p className="text-sm font-semibold text-slate-500">
+            <div className={theme.card}>
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className={`${theme.sectionTitle} ${theme.brushUnderline}`}>
+                  Tasks μήνα
+                </h3>
+
+                <p className="text-sm font-semibold text-neutral-500">
                   {selectedMonth}
                 </p>
               </div>
@@ -1305,19 +1334,17 @@ function App() {
       <div className="space-y-6">
         <CategoryStats stats={selectedCalendarStats} />
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-500">
-            Επιλεγμένη ημέρα
-          </p>
+        <div className={theme.card}>
+          <p className={theme.eyebrow}>Επιλεγμένη ημέρα</p>
 
-          <h3 className="mt-1 text-2xl font-bold">{selectedCalendarDate}</h3>
+          <h3 className="mt-2 text-2xl font-bold text-neutral-950">
+            {selectedCalendarDate}
+          </h3>
 
-          <div className="mt-4 space-y-2 text-sm font-semibold text-slate-700">
+          <div className="mt-5 space-y-3 text-sm font-semibold text-neutral-700">
             <p>Tasks: {selectedCalendarStats.totalTasks}</p>
             <p>Done: {selectedCalendarStats.doneTasks}</p>
-            <p>
-              Χρόνος: {formatMinutes(selectedCalendarStats.totalMinutes)}
-            </p>
+            <p>Χρόνος: {formatMinutes(selectedCalendarStats.totalMinutes)}</p>
             <p>Completion: {selectedCalendarStats.completionRate}%</p>
           </div>
 
@@ -1332,7 +1359,7 @@ function App() {
               }));
               setActiveView("today");
             }}
-            className="mt-5 w-full rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+            className={`${theme.primaryButton} mt-5 w-full text-sm`}
           >
             Δες την ημέρα
           </button>
@@ -1345,10 +1372,11 @@ function App() {
     return (
       <>
         <header className="mb-8">
-          <p className="text-sm font-semibold text-slate-500">
-            All-time Dashboard
-          </p>
-          <h2 className="text-3xl font-bold">Συνολικά στατιστικά</h2>
+          <p className={theme.eyebrow}>All-time Dashboard</p>
+
+          <h2 className={`${theme.title} ${theme.brushUnderline}`}>
+            Συνολικά στατιστικά
+          </h2>
         </header>
 
         <StatCards stats={allTimeStats} />
@@ -1356,10 +1384,12 @@ function App() {
         <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
           <CategoryStats stats={allTimeStats} />
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-xl font-bold">Σύνοψη</h3>
+          <div className={theme.card}>
+            <h3 className={`${theme.sectionTitle} ${theme.brushUnderline} mb-5`}>
+              Σύνοψη
+            </h3>
 
-            <div className="space-y-3 text-sm font-semibold text-slate-700">
+            <div className="space-y-3 text-sm font-semibold text-neutral-700">
               <p>Συνολικά tasks: {allTimeStats.totalTasks}</p>
               <p>Ολοκληρωμένα tasks: {allTimeStats.doneTasks}</p>
               <p>Συνολικός χρόνος: {formatMinutes(allTimeStats.totalMinutes)}</p>
@@ -1380,32 +1410,36 @@ function App() {
           </div>
         </div>
 
-        <div className="mt-8 rounded-2xl bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-xl font-bold">Ανάλυση ανά κατηγορία</h3>
+        <div className={`${theme.card} mt-8`}>
+          <h3 className={`${theme.sectionTitle} ${theme.brushUnderline} mb-5`}>
+            Ανάλυση ανά κατηγορία
+          </h3>
 
           <div className="space-y-3">
             {allTimeStats.categoryStats.map((categoryStat) => (
               <div
                 key={categoryStat.category}
-                className="rounded-xl border border-slate-200 p-4"
+                className={`${theme.innerPanel} p-4`}
               >
                 <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-                  <h4 className="font-bold">{categoryStat.category}</h4>
+                  <h4 className="font-bold text-neutral-950">
+                    {categoryStat.category}
+                  </h4>
 
-                  <p className="text-sm font-semibold text-slate-500">
+                  <p className="text-sm font-semibold text-neutral-500">
                     {categoryStat.completionRate}% completion
                   </p>
                 </div>
 
-                <div className="grid gap-3 text-sm font-semibold text-slate-700 md:grid-cols-3">
+                <div className="grid gap-3 text-sm font-semibold text-neutral-700 md:grid-cols-3">
                   <p>Tasks: {categoryStat.totalTasks}</p>
                   <p>Done: {categoryStat.doneTasks}</p>
                   <p>Χρόνος: {formatMinutes(categoryStat.totalMinutes)}</p>
                 </div>
 
-                <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-3 h-3 overflow-hidden rounded-full border border-neutral-300 bg-stone-200">
                   <div
-                    className="h-full rounded-full bg-slate-950"
+                    className="h-full rounded-full bg-neutral-950"
                     style={{
                       width: `${categoryStat.completionRate}%`,
                     }}
@@ -1423,21 +1457,24 @@ function App() {
     return (
       <>
         <header className="mb-8">
-          <p className="text-sm font-semibold text-slate-500">
-            Ideas / Later / Watchlist
-          </p>
-          <h2 className="text-3xl font-bold">Backlog</h2>
+          <p className={theme.eyebrow}>Ideas / Later / Watchlist</p>
+
+          <h2 className={`${theme.title} ${theme.brushUnderline}`}>
+            Backlog
+          </h2>
         </header>
 
         <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
           {renderForm()}
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className={theme.card}>
+            <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 className="text-xl font-bold">Όλα τα backlog items</h3>
+                <h3 className={`${theme.sectionTitle} ${theme.brushUnderline}`}>
+                  Όλα τα backlog items
+                </h3>
 
-                <p className="text-sm font-semibold text-slate-500">
+                <p className="mt-3 text-sm font-semibold text-neutral-500">
                   {filteredBacklogItems.length}/{backlogItems.length} items · Διάλεξε ημερομηνία για schedule
                 </p>
               </div>
@@ -1449,15 +1486,15 @@ function App() {
                   setSelectedDate(event.target.value);
                   setSelectedMonth(getMonthFromDate(event.target.value));
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                className={theme.input}
               />
             </div>
 
-            <div className="mb-4 grid gap-3 md:grid-cols-4">
+            <div className="mb-5 grid gap-3 md:grid-cols-4">
               <select
                 value={backlogCategoryFilter}
                 onChange={(event) => setBacklogCategoryFilter(event.target.value)}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold"
+                className={theme.inputFull}
               >
                 <option value="all">All categories</option>
                 {categories.map((category) => (
@@ -1470,9 +1507,11 @@ function App() {
               <select
                 value={backlogPriorityFilter}
                 onChange={(event) =>
-                  setBacklogPriorityFilter(event.target.value as BacklogPriority | "all")
+                  setBacklogPriorityFilter(
+                    event.target.value as BacklogPriority | "all"
+                  )
                 }
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold"
+                className={theme.inputFull}
               >
                 <option value="all">All priorities</option>
                 <option value="high">High</option>
@@ -1483,9 +1522,11 @@ function App() {
               <select
                 value={backlogStatusFilter}
                 onChange={(event) =>
-                  setBacklogStatusFilter(event.target.value as BacklogStatus | "all")
+                  setBacklogStatusFilter(
+                    event.target.value as BacklogStatus | "all"
+                  )
                 }
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold"
+                className={theme.inputFull}
               >
                 <option value="all">All statuses</option>
                 <option value="idea">Idea</option>
@@ -1496,9 +1537,11 @@ function App() {
               <select
                 value={backlogSort}
                 onChange={(event) =>
-                  setBacklogSort(event.target.value as "newest" | "priority" | "category")
+                  setBacklogSort(
+                    event.target.value as "newest" | "priority" | "category"
+                  )
                 }
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold"
+                className={theme.inputFull}
               >
                 <option value="newest">Newest first</option>
                 <option value="priority">Priority first</option>
@@ -1508,7 +1551,7 @@ function App() {
 
             <div className="space-y-3">
               {filteredBacklogItems.length === 0 && (
-                <p className="rounded-xl bg-slate-50 p-4 text-slate-500">
+                <p className={`${theme.innerPanel} p-4 text-neutral-500`}>
                   Δεν υπάρχουν backlog items με αυτά τα φίλτρα.
                 </p>
               )}
@@ -1516,24 +1559,27 @@ function App() {
               {filteredBacklogItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4 md:flex-row md:items-center md:justify-between"
+                  className={`${theme.innerPanel} flex flex-col gap-3 p-4 transition hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(23,23,23,0.08)] md:flex-row md:items-center md:justify-between`}
                 >
                   <div>
-                    <p className="font-bold">{item.title}</p>
-                    <p className="text-sm text-slate-500">{item.category}</p>
+                    <p className="font-bold text-neutral-950">{item.title}</p>
+
+                    <p className="text-sm font-semibold text-neutral-500">
+                      {item.category}
+                    </p>
 
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
+                      <span className={theme.badge}>
                         Priority: {item.priority ?? "medium"}
                       </span>
 
-                      <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
+                      <span className={theme.badge}>
                         Status: {item.backlogStatus ?? "idea"}
                       </span>
                     </div>
 
                     {item.notes && (
-                      <p className="mt-2 text-sm text-slate-600">
+                      <p className="mt-2 text-sm text-neutral-600">
                         {item.notes}
                       </p>
                     )}
@@ -1542,21 +1588,21 @@ function App() {
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => startEditTask(item)}
-                      className="rounded-xl bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-200"
+                      className={theme.smallButton}
                     >
                       Edit
                     </button>
 
                     <button
                       onClick={() => scheduleBacklogItem(item)}
-                      className="rounded-xl bg-purple-100 px-4 py-2 text-sm font-bold text-purple-700 hover:bg-purple-200"
+                      className="rounded-xl bg-neutral-950 px-4 py-2 text-sm font-bold text-stone-50 transition hover:bg-neutral-800"
                     >
                       Schedule
                     </button>
 
                     <button
                       onClick={() => requestDeleteTask(item)}
-                      className="rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-200"
+                      className={theme.dangerButton}
                     >
                       Delete
                     </button>
@@ -1595,71 +1641,85 @@ function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-950">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-64 border-r border-slate-200 bg-white p-6 lg:block">
-          <div className="mb-10">
-            <p className="text-sm font-semibold text-slate-400">
-              Personal Path
-            </p>
-            <h1 className="text-2xl font-bold">Tenka Musō</h1>
-          </div>
+    <div className={theme.appShell}>
+      <div className={`${theme.pageBackdrop} ${theme.paperTexture}`}>
+        <div className="flex min-h-screen">
+          <aside className={theme.sidebar}>
+            <div className="mb-10">
+              <p className="text-xs font-bold tracking-[0.35em] text-neutral-500">
+                天下無双
+              </p>
 
-          <nav className="space-y-2">
-            {views.map((view) => (
-              <button
-                key={view.id}
-                onClick={() => setActiveView(view.id)}
-                className={`w-full rounded-xl px-4 py-3 text-left text-sm font-semibold ${activeView === view.id
-                  ? "bg-slate-950 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-                  }`}
-              >
-                {view.label}
-              </button>
-            ))}
-          </nav>
+              <h1 className="mt-2 font-serif text-3xl font-black tracking-tight text-neutral-950">
+                Tenka Musō
+              </h1>
 
-          <div className="mt-10 rounded-2xl bg-slate-950 p-4 text-white">
-            <p className="text-sm text-slate-300">Current view</p>
-            <p className="mt-2 text-lg font-bold">{activeView}</p>
-          </div>
-        </aside>
-
-        <main className="flex-1 p-4 md:p-8">
-          {renderAuthPanel()}
-          {tasksLoading && (
-            <div className="mb-4 rounded-2xl bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">
-              Φόρτωση tasks από Firestore...
+              <p className="mt-2 text-sm font-semibold text-neutral-500">
+                Discipline • Focus • Path
+              </p>
             </div>
-          )}
-          <div className="mb-4 flex gap-2 overflow-x-auto lg:hidden">
-            {views.map((view) => (
-              <button
-                key={view.id}
-                onClick={() => setActiveView(view.id)}
-                className={`rounded-xl px-4 py-2 text-sm font-bold ${activeView === view.id
-                  ? "bg-slate-950 text-white"
-                  : "bg-white text-slate-600"
-                  }`}
-              >
-                {view.label}
-              </button>
-            ))}
-          </div>
 
-          {activeView === "today" && renderTodayView()}
-          {activeView === "week" && renderWeekView()}
-          {activeView === "month" && renderMonthView()}
-          {activeView === "stats" && renderStatsView()}
-          {activeView === "backlog" && renderBacklogView()}
-        </main>
+            <nav className="space-y-2">
+              {views.map((view) => (
+                <button
+                  key={view.id}
+                  onClick={() => setActiveView(view.id)}
+                  className={
+                    activeView === view.id ? theme.navItemActive : theme.navItem
+                  }
+                >
+                  {view.label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="mt-10 rounded-2xl border border-neutral-300 bg-neutral-950 p-4 text-stone-50 shadow-[0_10px_25px_rgba(23,23,23,0.18)]">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-stone-400">
+                Current view
+              </p>
+              <p className="mt-2 text-lg font-bold">{activeView}</p>
+            </div>
+          </aside>
+
+          <main className={theme.main}>
+            <div className={theme.pageContent}>
+              {renderAuthPanel()}
+              {tasksLoading && (
+                <div className={`${theme.cardSoft} mb-4 text-sm font-semibold text-neutral-600`}>
+                  Φόρτωση tasks από Firestore...
+                </div>
+              )}
+              <div className="mb-4 flex gap-2 overflow-x-auto lg:hidden">
+                {views.map((view) => (
+                  <button
+                    key={view.id}
+                    onClick={() => setActiveView(view.id)}
+                    className={
+                      activeView === view.id
+                        ? "shrink-0 rounded-xl bg-neutral-950 px-4 py-2 text-sm font-bold text-stone-50"
+                        : "shrink-0 rounded-xl border border-neutral-300 bg-stone-100 px-4 py-2 text-sm font-bold text-neutral-700"
+                    }
+                  >
+                    {view.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeView === "today" && renderTodayView()}
+              {activeView === "week" && renderWeekView()}
+              {activeView === "month" && renderMonthView()}
+              {activeView === "stats" && renderStatsView()}
+              {activeView === "backlog" && renderBacklogView()}
+
+            </div>
+          </main>
+        </div>
+
+        <ConfirmModal
+          confirmModal={confirmModal}
+          onClose={() => setConfirmModal(null)}
+        />
       </div>
-
-      <ConfirmModal
-        confirmModal={confirmModal}
-        onClose={() => setConfirmModal(null)}
-      />
     </div>
   );
 }
