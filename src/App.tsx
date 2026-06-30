@@ -16,6 +16,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 
@@ -57,6 +58,13 @@ function App() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
+
+  const [dailyNotes, setDailyNotes] = useState<Record<string, string>>({});
+  const [dailyNoteDraft, setDailyNoteDraft] = useState("");
+  const [dailyNotesLoading, setDailyNotesLoading] = useState(true);
+  const [dailyNoteSaving, setDailyNoteSaving] = useState(false);
+  const [dailyNoteSaved, setDailyNoteSaved] = useState(false);
+  const [dailyNoteError, setDailyNoteError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -227,13 +235,17 @@ function App() {
       setFirebaseUser(null);
       setTasks([]);
       setCustomCategories([]);
+      setDailyNotes({});
+      setDailyNoteDraft("");
       setTasksLoading(true);
+      setDailyNotesLoading(true);
 
       signInAnonymously(auth).catch((error) => {
         console.error("Anonymous sign-in failed:", error);
         setAuthError("Δεν μπόρεσε να γίνει anonymous σύνδεση.");
         setAuthLoading(false);
         setTasksLoading(false);
+        setDailyNotesLoading(false);
       });
     });
 
@@ -305,7 +317,10 @@ function App() {
     setAuthError(null);
     setTasks([]);
     setCustomCategories([]);
+    setDailyNotes({});
+    setDailyNoteDraft("");
     setTasksLoading(true);
+    setDailyNotesLoading(true);
 
     await signOut(auth);
   }
@@ -379,6 +394,49 @@ function App() {
     return () => unsubscribe();
   }, [firebaseUser]);
 
+  useEffect(() => {
+    if (!firebaseUser) return;
+
+    setDailyNotesLoading(true);
+
+    const dailyNotesRef = collection(
+      db,
+      "users",
+      firebaseUser.uid,
+      "dailyNotes"
+    );
+
+    const unsubscribe = onSnapshot(
+      dailyNotesRef,
+      (snapshot) => {
+        const notesByDate: Record<string, string> = {};
+
+        snapshot.docs.forEach((docSnapshot) => {
+          const data = docSnapshot.data();
+
+          notesByDate[docSnapshot.id] =
+            typeof data.content === "string" ? data.content : "";
+        });
+
+        setDailyNotes(notesByDate);
+        setDailyNotesLoading(false);
+      },
+      (error) => {
+        console.error("Firestore daily notes listener failed:", error);
+        setDailyNoteError("Δεν μπόρεσαν να φορτωθούν τα daily notes.");
+        setDailyNotesLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [firebaseUser]);
+
+  useEffect(() => {
+    setDailyNoteDraft(dailyNotes[selectedDate] ?? "");
+    setDailyNoteSaved(false);
+    setDailyNoteError(null);
+  }, [dailyNotes, selectedDate]);
+
   async function saveTask() {
     if (!firebaseUser) return;
     if (!form.title.trim()) return;
@@ -430,6 +488,41 @@ function App() {
       priority: "medium",
       backlogStatus: "idea",
     });
+  }
+
+  async function saveDailyNote() {
+    if (!firebaseUser) return;
+
+    setDailyNoteSaving(true);
+    setDailyNoteSaved(false);
+    setDailyNoteError(null);
+
+    try {
+      const dailyNoteRef = doc(
+        db,
+        "users",
+        firebaseUser.uid,
+        "dailyNotes",
+        selectedDate
+      );
+
+      await setDoc(
+        dailyNoteRef,
+        {
+          date: selectedDate,
+          content: dailyNoteDraft,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      setDailyNoteSaved(true);
+    } catch (error) {
+      console.error("Save daily note failed:", error);
+      setDailyNoteError("Δεν μπόρεσε να αποθηκευτεί το daily note.");
+    } finally {
+      setDailyNoteSaving(false);
+    }
   }
 
   async function toggleDone(taskId: string) {
@@ -937,6 +1030,64 @@ function App() {
     );
   }
 
+  function renderDailyNoteCard() {
+    return (
+      <div className={theme.card}>
+        <div className="mb-5">
+          <p className={theme.eyebrow}>Daily Journal</p>
+
+          <h3 className={`${theme.sectionTitle} ${theme.brushUnderline}`}>
+            Σημείωση ημέρας
+          </h3>
+
+          <p className="mt-3 text-sm font-semibold text-neutral-500">
+            {selectedDate}
+          </p>
+        </div>
+
+        <textarea
+          value={dailyNoteDraft}
+          onChange={(event) => {
+            setDailyNoteDraft(event.target.value);
+            setDailyNoteSaved(false);
+          }}
+          disabled={dailyNotesLoading}
+          placeholder="Γράψε ελεύθερα πώς πήγε η ημέρα, τι έμαθες, τι θέλεις να θυμάσαι..."
+          className={`${theme.inputFull} min-h-40 resize-y leading-6`}
+        />
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={saveDailyNote}
+            disabled={dailyNoteSaving || dailyNotesLoading}
+            className={theme.primaryButton}
+          >
+            {dailyNoteSaving ? "Saving..." : "Save note"}
+          </button>
+
+          {dailyNotesLoading && (
+            <p className="text-sm font-semibold text-neutral-500">
+              Φόρτωση note...
+            </p>
+          )}
+
+          {dailyNoteSaved && (
+            <p className="text-sm font-semibold text-neutral-700">
+              Αποθηκεύτηκε.
+            </p>
+          )}
+
+          {dailyNoteError && (
+            <p className="text-sm font-semibold text-neutral-700">
+              {dailyNoteError}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   function renderTodayView() {
     return (
       <>
@@ -984,6 +1135,8 @@ function App() {
           </section>
 
           <aside className="space-y-6">
+            {renderDailyNoteCard()}
+
             <CategoryStats stats={todayStats} />
 
             <div className={theme.card}>
@@ -1346,6 +1499,20 @@ function App() {
             <p>Done: {selectedCalendarStats.doneTasks}</p>
             <p>Χρόνος: {formatMinutes(selectedCalendarStats.totalMinutes)}</p>
             <p>Completion: {selectedCalendarStats.completionRate}%</p>
+          </div>
+
+          <div className="mt-5">
+            <p className="text-sm font-bold text-neutral-700">Daily note</p>
+
+            {dailyNotes[selectedCalendarDate] ? (
+              <p className={`${theme.innerPanel} mt-2 p-4 text-sm leading-6 text-neutral-600`}>
+                {dailyNotes[selectedCalendarDate]}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm font-semibold text-neutral-400">
+                Δεν υπάρχει note για αυτή την ημέρα.
+              </p>
+            )}
           </div>
 
           <button
